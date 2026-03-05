@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1150">
+    <title>5개년도 침대 가격대별 판매량 분석 보고서</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 1. 디자인 시스템 정의 */
+        :root {
+            --color-low: #f9bc01;      /* 저가/파운데이션 */
+            --color-mid: #94a3b8;      /* 중가/프레임 (회색계열) */
+            --color-high: #29b6f6;     /* 고가/매트리스 (밝은 파란색) */
+            --color-dark-high: #43556e;
+            --color-text: #1a1a1a;
+            --color-subtext: #64748b;
+            --color-bg: #ffffff;
+            --report-width: 1150px;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0; background-color: #f8fafc;
+            font-family: 'Noto Sans KR', sans-serif; color: var(--color-text);
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .report-section {
+            width: var(--report-width); background-color: var(--color-bg);
+            padding: 90px 80px; margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); position: relative;
+        }
+
+        .report-section:last-child { margin-bottom: 100px; }
+
+        .main-header { text-align: left; border-bottom: 5px solid var(--color-text); padding-bottom: 40px; margin-bottom: 60px; }
+        .main-header h1 { font-size: 52px; margin: 0; font-weight: 900; letter-spacing: -2px; line-height: 1.1; }
+        .main-header .subtitle { font-size: 26px; color: var(--color-subtext); margin-top: 15px; font-weight: 500; }
+        .report-info { position: absolute; top: 90px; right: 80px; text-align: right; }
+        .report-info .date { font-size: 36px; font-weight: 900; color: var(--color-dark-high); }
+        .report-info .author { font-size: 18px; font-weight: 700; color: #94a3b8; margin-top: 5px; }
+
+        .section-title {
+            font-size: 34px; font-weight: 900; margin-bottom: 45px;
+            display: flex; align-items: center; gap: 15px; color: var(--color-dark-high);
+        }
+        .section-title::before { content: ''; width: 8px; height: 34px; background-color: var(--color-dark-high); border-radius: 4px; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 17px; }
+        th { background-color: #f1f5f9; color: #334155; font-weight: 700; padding: 18px; border: 1px solid #e2e8f0; }
+        td { padding: 18px; border: 1px solid #e2e8f0; text-align: center; }
+
+        .page1-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+        .info-item { font-size: 20px; line-height: 2.5; font-weight: 700; }
+        .info-item i { color: #5ea1d7; margin-right: 10px; width: 30px; }
+        
+        .model-list-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+        .model-box { background: #f8fafc; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .model-box h5 { margin: 0 0 15px 0; font-size: 20px; font-weight: 900; color: #1e293b; border-bottom: 2px solid #5ea1d7; display: inline-block; padding-bottom: 5px; }
+        .model-box p { margin: 12px 0; font-size: 18px; line-height: 1.6; font-weight: 700; color: #475569; }
+
+        .chart-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 20px; }
+        .chart-container { background: #fff; padding: 20px; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+        .chart-label { text-align: center; font-weight: 900; font-size: 20px; margin-bottom: 25px; padding: 12px; background: #f8fafc; border-radius: 12px; border-bottom: 3px solid #5ea1d7; }
+        
+        .bar-wrapper { display: flex; justify-content: space-between; height: 380px; align-items: flex-end; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px; position: relative; overflow: visible; padding: 0 5px; }
+        .stack-bar { width: 55px; height: 100%; display: flex; flex-direction: column-reverse; position: relative; overflow: visible; }
+        
+        .segment { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            color: #000; font-size: 11px; font-weight: 900; line-height: 1.1; text-align: center; 
+            overflow: visible; position: relative; z-index: 10;
+        }
+        .segment span { 
+            display: block; white-space: nowrap; position: relative; z-index: 120;
+        }
+        
+        .low-segment-label { 
+            position: absolute; 
+            bottom: 1px; 
+            z-index: 150 !important;
+        }
+
+        .year-label { position: absolute; bottom: -35px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 900; color: #64748b; white-space: nowrap; }
+        .txt-lg { font-size: 16px !important; color: #000000 !important; }
+
+        .cagr-side-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+
+        .insight-card { background: #f8fafc; border-left: 10px solid #5ea1d7; padding: 35px; border-radius: 0 20px 20px 0; margin-bottom: 50px; }
+        .insight-card h4 { margin: 0 0 15px 0; font-size: 24px; color: var(--color-dark-high); font-weight: 900; }
+        .insight-card p { margin: 0; font-size: 18px; line-height: 1.8; color: #475569; font-weight: 500; }
+
+        .scatter-outer { width: 1080px; height: 1650px; background: #fff; margin: 40px auto 0; padding: 40px 220px 100px 180px; position: relative; border: 1px solid #e2e8f0; border-radius: 24px; }
+        .scatter-box { width: 100%; height: 1250px; border-left: 3px solid #1e293b; border-bottom: 3px solid #1e293b; position: relative; background: #fff; }
+        .y-axis { position: absolute; left: -110px; height: 100%; display: flex; flex-direction: column-reverse; justify-content: space-between; font-size: 14px; font-weight: 900; color: #475569; padding-bottom: 5px; }
+        .x-axis-labels { position: absolute; bottom: -60px; width: 100%; display: flex; justify-content: space-around; font-size: 22px; font-weight: 900; color: #1e293b; }
+        .zone { position: absolute; width: 48%; height: auto; left: 0; z-index: 1; border-right: 1px dashed rgba(0,0,0,0.1); pointer-events: none; }
+        .zone-mattress { left: 52%; width: 48%; }
+        .bg-low { background-color: #fffbeb; } .bg-mid { background-color: #eff6ff; } .bg-high { background-color: #fef2f2; }
+        
+        .scatter-point { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, 50%); border: 1px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.3); z-index: 30; }
+        .point-label { position: absolute; font-size: 8px; font-weight: 800; white-space: nowrap; z-index: 35; color: #1e293b; text-shadow: 0 0 3px #fff; pointer-events: none; }
+        
+        .off-u { transform: translate(8px, -15px); } .off-d { transform: translate(8px, 4px); }
+        .off-uu { transform: translate(8px, -26px); } .off-dd { transform: translate(8px, 15px); }
+        .off-r { transform: translate(10px, -4px); } .off-l { transform: translate(-100%, -4px); margin-left: -10px; }
+        .off-ul { transform: translate(-100%, -15px); margin-left: -10px; } .off-dl { transform: translate(-100%, 4px); margin-left: -10px; }
+
+        .avg-marker { position: absolute; width: 48%; border-top: 2px dashed rgba(0,0,0,0.4); z-index: 10; display: flex; align-items: center; }
+        .avg-label { position: absolute; font-size: 11px; font-weight: 900; color: #fff; padding: 3px 8px; border-radius: 5px; white-space: nowrap; }
+        .gap-bracket { position: absolute; border-left: 2px solid #ef4444; border-top: 2px solid #ef4444; border-bottom: 2px solid #ef4444; width: 12px; z-index: 10; display: flex; align-items: center; }
+        .gap-val { position: absolute; left: 18px; color: #ef4444; font-weight: 900; font-size: 13px; white-space: nowrap; background: #fff; padding: 0 4px; }
+
+        .strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 35px; }
+        .strategy-item { background: white; border: 2px solid #f1f5f9; padding: 45px; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.03); }
+        .strategy-item h5 { font-size: 24px; margin: 0 0 20px 0; color: var(--color-dark-high); font-weight: 900; display: flex; align-items: center; gap: 12px; }
+        .strategy-item p { font-size: 18px; line-height: 1.8; color: #64748b; margin: 0; }
+        
+        .legend { display: flex; justify-content: center; gap: 30px; margin-top: 45px; font-weight: 900; }
+        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+        .color-dot { width: 16px; height: 16px; border-radius: 4px; }
+
+        /* AI 연구소 스타일 */
+        .ai-lab-container {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #bae6fd;
+            border-radius: 30px;
+            padding: 50px;
+            margin-top: 50px;
+        }
+        .ai-input-wrapper {
+            display: flex; gap: 15px; margin-bottom: 30px;
+        }
+        .ai-textarea {
+            flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #bae6fd;
+            font-family: inherit; font-size: 16px; resize: none; outline: none;
+            transition: all 0.3s ease;
+        }
+        .ai-textarea:focus { border-color: #0ea5e9; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
+        .ai-btn {
+            background: #0ea5e9; color: white; border: none; padding: 0 30px;
+            border-radius: 15px; font-weight: 900; font-size: 18px; cursor: pointer;
+            transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;
+        }
+        .ai-btn:hover { background: #0284c7; transform: translateY(-2px); }
+        .ai-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+        .ai-result-card {
+            background: white; border-radius: 20px; padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); min-height: 100px;
+            line-height: 1.8; font-size: 17px; white-space: pre-wrap;
+        }
+        .loading-dots:after {
+            content: ' .';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            40% { color: #0ea5e9; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            60% { text-shadow: .25em 0 0 #0ea5e9, .5em 0 0 rgba(0,0,0,0); }
+            80%, 100% { text-shadow: .25em 0 0 #0ea5e9, .5em 0 0 #0ea5e9; }
+        }
+        /* 강조용 클래스 */
+        .fact-highlight {
+            font-weight: bold;
+            background-color: #ffff00;
+            padding: 0 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 섹션 1: 개요 및 분류 기준 -->
+    <div class="report-section">
+        <div class="main-header">
+            <h1>5개년도(2021년~2025년)<br>침대 가격대별 판매량 분석</h1>
+            <div class="subtitle">홈케어사업실 · 전사 · CL사업실 성과 비교 보고</div>
+        </div>
+        <div class="report-info">
+            <p class="date">2026.03</p>
+            <p class="author">홈케어기획팀 임영주</p>
+        </div>
+        
+        <div class="page1-grid">
+            <div class="model-box" style="background:#fff; border:none; padding:0;">
+                <h3 class="section-title" style="margin-bottom:20px;">분석 기준</h3>
+                <ul style="list-style: none; padding: 0;" class="info-item">
+                    <li><i class="fa-solid fa-calendar-check"></i> <strong>분석 기간:</strong> 2021년 ~ 2025년</li>
+                    <li><i class="fa-solid fa-couch"></i> <strong>분석 대상:</strong> 매트리스, 프레임 전체</li>
+                    <li><i class="fa-solid fa-file-invoice-dollar"></i> <strong>데이터:</strong> 월 표준 렌탈료</li>
+                </ul>
+            </div>
+            <div class="model-box" style="background:#fff; border:none; padding:0;">
+                <h3 class="section-title" style="margin-bottom:20px;">가격 등급 분류</h3>
+                <table>
+                    <thead>
+                        <tr><th>구분</th><th>매트리스 (M)</th><th>프레임 (F)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td style="font-weight: 900;">저가</td><td>29,000원 미만</td><td>15,000원 미만</td></tr>
+                        <tr><td style="font-weight: 900;">중가</td><td>29,000원 ~ 50,000원</td><td>15,000원 ~ 25,000원</td></tr>
+                        <tr style="background: #f1f5f9;"><td style="font-weight: 900; color: var(--color-dark-high);">고가</td><td style="font-weight: 900;">50,000원 이상</td><td style="font-weight: 900;">25,000원 이상</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="model-list-container" style="margin-top: 40px; border-top: 2px solid #f1f5f9; padding-top: 40px;">
+            <h3 class="section-title">가격대별 모델 리스트</h3>
+            <div class="model-list-grid">
+                <div class="model-box">
+                    <h5>매트리스 라인업 (Mattress)</h5>
+                    <p><strong>고가:</strong> 스마트 S7, S5, S8+, S6+, 시그니처, 시그니처 컴포트, 파이어쉴드, 파이어쉴드 컴포트, 메모리폼 매트리스</p>
+                    <p><strong>중가:</strong> 하이브리드2, 하이브리드3, 하이브리드4, 하이브리드 매트리스, 탑퍼교체 트리플/더블/프라임 플러스2, 원바디, 메모리폼 컴팩트, 루네어, 고급형 매트리스, 모디, 더블 사이드</p>
+                    <p><strong>저가:</strong> 엘리트, 슬림탑퍼교체 프라임, 일반형 매트리스</p>
+                </div>
+                <div class="model-box">
+                    <h5>프레임/파운데이션 (Frame & Foundation)</h5>
+                    <p><strong>고가:</strong> 모션 프레임, 볼륨 프레임, 소프트쿠션 프레임, 그레이스 프레임, 비렉스 수납형, 마이프레임(사이드), 저상형 패밀리, 컴포트 프레임, 단매트리스 프레임, 모던 라운드</p>
+                    <p><strong>중가:</strong> 마이 프레임, 루나 프레임, 원목 프레임, 원목 쿠션, 싱글 프레임, 우디 프레임, 코지 프레임, 투매트리스, 모던 수납/쿠션 프레임, 저상형 싱글</p>
+                    <p><strong>저가:</strong> 비렉스 파운데이션, 파운데이션 F02, 파운데이션 F03</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 섹션 2: 침대 가격대별 비중 추이 (전체) -->
+    <div class="report-section">
+        <h3 class="section-title"><i class="fa-solid fa-chart-simple" style="color:#5ea1d7"></i> 침대 가격대별 비중 추이 (매트리스 + 프레임)</h3>
+        
+        <div class="insight-card">
+            <h4>전 채널 신제품 출시에 따른 저가/고가 동반 상승</h4>
+            <p>전 채널 공통으로 저가와 고가 비중이 상승했습니다. 이는 <span class="fact-highlight">신제품(엘리트, 파운데이션, 볼륨 매트리스 등) 출시</span>로 인한 판매 호조로 인한 영향입니다.</p>
+        </div>
+
+        <div class="chart-grid">
+            <div class="chart-container">
+                <div class="chart-label">홈케어사업실</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar"><div class="segment" style="height:14.1%; background:var(--color-low);"><span>14.1%<br>(10,597)</span></div><div class="segment" style="height:81.1%; background:var(--color-mid);"><span>81.1%<br>(60,787)</span></div><div class="segment" style="height:4.8%; background:var(--color-high);"><span>4.8%<br>(3,582)</span></div><div class="year-label">2021</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:12.8%; background:var(--color-low);"><span>12.8%<br>(11,363)</span></div><div class="segment" style="height:82.3%; background:var(--color-mid);"><span>82.3%<br>(72,847)</span></div><div class="segment" style="height:4.9%; background:var(--color-high);"><span>4.9%<br>(4,278)</span></div><div class="year-label">2022</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:15.7%; background:var(--color-low);"><span>15.7%<br>(15,151)</span></div><div class="segment" style="height:76.9%; background:var(--color-mid);"><span>76.9%<br>(74,367)</span></div><div class="segment" style="height:7.4%; background:var(--color-high);"><span>7.4%<br>(7,250)</span></div><div class="year-label">2023</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:38.1%; background:var(--color-low);"><span>38.1%<br>(43,348)</span></div><div class="segment" style="height:53.9%; background:var(--color-mid);"><span>53.9%<br>(61,208)</span></div><div class="segment" style="height:8.0%; background:var(--color-high);"><span>8.0%<br>(9,091)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:40.7%; background:var(--color-low);"><span>40.7%<br>(50,365)</span></div><div class="segment" style="height:46.8%; background:var(--color-mid);"><span>46.8%<br>(57,796)</span></div><div class="segment" style="height:12.5%; background:var(--color-high);"><span>12.5%<br>(15,519)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-label">전사</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar"><div class="segment" style="height:9.0%; background:var(--color-low);"><span>9.0%<br>(13,385)</span></div><div class="segment" style="height:84.9%; background:var(--color-mid);"><span>84.9%<br>(126,297)</span></div><div class="segment" style="height:6.1%; background:var(--color-high);"><span>6.1%<br>(9,006)</span></div><div class="year-label">2021</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:8.8%; background:var(--color-low);"><span>8.8%<br>(13,242)</span></div><div class="segment" style="height:84.9%; background:var(--color-mid);"><span>84.9%<br>(127,263)</span></div><div class="segment" style="height:6.3%; background:var(--color-high);"><span>6.3%<br>(9,452)</span></div><div class="year-label">2022</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:11.0%; background:var(--color-low);"><span>11.0%<br>(18,333)</span></div><div class="segment" style="height:77.5%; background:var(--color-mid);"><span>77.5%<br>(129,664)</span></div><div class="segment" style="height:11.5%; background:var(--color-high);"><span>11.5%<br>(19,243)</span></div><div class="year-label">2023</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:27.7%; background:var(--color-low);"><span>27.7%<br>(54,537)</span></div><div class="segment" style="height:60.1%; background:var(--color-mid);"><span>60.1%<br>(118,230)</span></div><div class="segment" style="height:12.2%; background:var(--color-high);"><span>12.2%<br>(23,998)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:28.2%; background:var(--color-low);"><span>28.2%<br>(66,386)</span></div><div class="segment" style="height:53.8%; background:var(--color-mid);"><span>53.8%<br>(126,756)</span></div><div class="segment" style="height:18.0%; background:var(--color-high);"><span>18.0%<br>(42,254)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-label">CL사업실</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar">
+                        <div class="segment" style="height:3.4%; background:var(--color-low); justify-content: flex-start;"><span class="low-segment-label" style="font-size: 10px; bottom: 1px;">3.4%<br>(1,668)</span></div>
+                        <div class="segment" style="height:89.4%; background:var(--color-mid);"><span>89.4%<br>(43,484)</span></div>
+                        <div class="segment" style="height:7.2%; background:var(--color-high);"><span>7.2%<br>(3,466)</span></div>
+                        <div class="year-label">2021</div>
+                    </div>
+                    <div class="stack-bar">
+                        <div class="segment" style="height:3.0%; background:var(--color-low); justify-content: flex-start;"><span class="low-segment-label" style="font-size: 10px; bottom: 1px;">3.0%<br>(1,276)</span></div>
+                        <div class="segment" style="height:88.7%; background:var(--color-mid);"><span>88.7%<br>(38,067)</span></div>
+                        <div class="segment" style="height:8.3%; background:var(--color-high);"><span>8.3%<br>(3,568)</span></div><div class="year-label">2022</div>
+                    </div>
+                    <div class="stack-bar">
+                        <div class="segment" style="height:4.8%; background:var(--color-low); justify-content: flex-start;"><span class="low-segment-label" style="font-size: 10px; bottom: 1px;">4.8%<br>(2,406)</span></div>
+                        <div class="segment" style="height:78.5%; background:var(--color-mid);"><span>78.5%<br>(39,552)</span></div>
+                        <div class="segment" style="height:16.7%; background:var(--color-high);"><span>16.7%<br>(8,404)</span></div><div class="year-label">2023</div>
+                    </div>
+                    <div class="stack-bar"><div class="segment" style="height:14.6%; background:var(--color-low);"><span>14.6%<br>(9,006)</span></div><div class="segment" style="height:68.5%; background:var(--color-mid);"><span>68.5%<br>(42,234)</span></div><div class="segment" style="height:16.9%; background:var(--color-high);"><span>16.9%<br>(10,419)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:15.1%; background:var(--color-low);"><span>15.1%<br>(12,144)</span></div><div class="segment" style="height:62.3%; background:var(--color-mid);"><span>62.3%<br>(50,097)</span></div><div class="segment" style="height:22.6%; background:var(--color-high);"><span>22.6%<br>(18,148)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="legend">
+            <div class="legend-item"><div class="color-dot" style="background: var(--color-low);"></div> 저가 제품</div>
+            <div class="legend-item"><div class="color-dot" style="background: var(--color-mid);"></div> 중가 제품</div>
+            <div class="legend-item"><div class="color-dot" style="background: var(--color-high);"></div> 고가 제품</div>
+        </div>
+    </div>
+
+    <!-- 섹션 3: 침대 가격대별 비중 추이 (매트리스) -->
+    <div class="report-section">
+        <h3 class="section-title"><i class="fa-solid fa-bed" style="color:#5ea1d7"></i> 침대 가격대별 비중 추이 (매트리스)</h3>
+        
+        <div class="insight-card">
+            <h4>엘리트 매트리스 출시 효과로 인한 저가 비중 성장</h4>
+            <p>특히, 매트리스 부문에서는 23년 9월 출시한 <span class="fact-highlight">엘리트 매트리스 판매 영향</span>으로 24년부터 저가 비중이 눈에 띄게 성장했습니다. 홈케어사업실은 타채널 대비하여 25년에도 전년 대비 저가 비중이 성장했습니다.</p>
+        </div>
+
+        <div class="chart-grid">
+            <div class="chart-container">
+                <div class="chart-label">홈케어사업실 (M)</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar"><div class="segment" style="height:3.2%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">3.2%<br>(1,412)</span></div><div class="segment" style="height:96.8%; background:var(--color-mid);"><span>96.8%<br>(42,213)</span></div><div class="year-label">2021</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:2.5%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">2.5%<br>(1,329)</span></div><div class="segment" style="height:97.5%; background:var(--color-mid);"><span>97.5%<br>(51,764)</span></div><div class="year-label">2022</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:6.7%; background:var(--color-low);"><span>6.7%<br>(3,945)</span></div><div class="segment" style="height:90.0%; background:var(--color-mid);"><span>90.0%<br>(53,039)</span></div><div class="segment" style="height:3.3%; background:var(--color-high);"><span>3.3%<br>(1,953)</span></div><div class="year-label">2023</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:29.3%; background:var(--color-low);"><span>29.3%<br>(19,467)</span></div><div class="segment" style="height:67.5%; background:var(--color-mid);"><span>67.5%<br>(44,901)</span></div><div class="segment" style="height:3.2%; background:var(--color-high);"><span>3.2%<br>(2,098)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:31.4%; background:var(--color-low);"><span>31.4%<br>(22,145)</span></div><div class="segment" style="height:65.4%; background:var(--color-mid);"><span>65.4%<br>(46,147)</span></div><div class="segment" style="height:3.2%; background:var(--color-high);"><span>3.2%<br>(2,224)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-label">전사 (M)</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar"><div class="segment" style="height:3.1%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">3.1%<br>(2,843)</span></div><div class="segment" style="height:96.9%; background:var(--color-mid);"><span>96.9%<br>(90,472)</span></div><div class="year-label">2021</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:2.4%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">2.4%<br>(2,295)</span></div><div class="segment" style="height:97.6%; background:var(--color-mid);"><span>97.6%<br>(92,483)</span></div><div class="year-label">2022</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:5.6%; background:var(--color-low);"><span>5.6%<br>(5,967)</span></div><div class="segment" style="height:88.8%; background:var(--color-mid);"><span>88.8%<br>(94,283)</span></div><div class="segment" style="height:5.6%; background:var(--color-high);"><span>5.6%<br>(5,946)</span></div><div class="year-label">2023</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:22.4%; background:var(--color-low);"><span>22.4%<br>(26,649)</span></div><div class="segment" style="height:72.9%; background:var(--color-mid);"><span>72.9%<br>(86,910)</span></div><div class="segment" style="height:4.7%; background:var(--color-high);"><span>4.7%<br>(5,639)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:21.7%; background:var(--color-low);"><span>21.7%<br>(30,319)</span></div><div class="segment" style="height:72.4%; background:var(--color-mid);"><span>72.4%<br>(101,072)</span></div><div class="segment" style="height:5.9%; background:var(--color-high);"><span>5.9%<br>(8,279)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-label">CL사업실 (M)</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar"><div class="segment" style="height:2.9%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">2.9%<br>(925)</span></div><div class="segment" style="height:97.1%; background:var(--color-mid);"><span>97.1%<br>(31,360)</span></div><div class="year-label">2021</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:2.5%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">2.5%<br>(701)</span></div><div class="segment" style="height:97.5%; background:var(--color-mid);"><span>97.5%<br>(27,781)</span></div><div class="year-label">2022</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:5.0%; background:var(--color-low);"><span>5.0%<br>(1,650)</span></div><div class="segment" style="height:86.8%; background:var(--color-mid);"><span>86.8%<br>(28,723)</span></div><div class="segment" style="height:8.3%; background:var(--color-high);"><span>8.3%<br>(2,736)</span></div><div class="year-label">2023</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:15.6%; background:var(--color-low);"><span>15.6%<br>(5,969)</span></div><div class="segment" style="height:78.6%; background:var(--color-mid);"><span>78.6%<br>(30,063)</span></div><div class="segment" style="height:5.8%; background:var(--color-high);"><span>5.8%<br>(2,212)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:13.1%; background:var(--color-low);"><span>13.1%<br>(6,372)</span></div><div class="segment" style="height:80.1%; background:var(--color-mid);"><span>80.1%<br>(39,002)</span></div><div class="segment" style="height:6.8%; background:var(--color-high);"><span>6.8%<br>(3,301)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 섹션 4: 침대 가격대별 비중 추이 (프레임) -->
+    <div class="report-section">
+        <h3 class="section-title"><i class="fa-solid fa-border-all" style="color:#5ea1d7"></i> 침대 가격대별 비중 추이 (프레임)</h3>
+        
+        <div class="insight-card">
+            <h4>신제품 출시에 따른 고가 및 저가 프레임 비중 확대</h4>
+            <p>24년도 잇따른 <span class="fact-highlight">고가 프레임 출시</span>와 23년 10월에 출시한 <span class="fact-highlight">저가 비렉스 파운데이션 출시</span> 영향으로 고가와 저가 프레임 비중이 확대되었습니다.</p>
+        </div>
+
+        <div class="chart-grid">
+            <div class="chart-container">
+                <div class="chart-label">홈케어사업실 (F)</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar"><div class="segment" style="height:29.3%; background:var(--color-low);"><span>29.3%<br>(9,185)</span></div><div class="segment" style="height:59.3%; background:var(--color-mid);"><span>59.3%<br>(18,574)</span></div><div class="segment" style="height:11.4%; background:var(--color-high);"><span>11.4%<br>(3,582)</span></div><div class="year-label">2021</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:28.3%; background:var(--color-low);"><span>28.3%<br>(10,034)</span></div><div class="segment" style="height:59.6%; background:var(--color-mid);"><span>59.6%<br>(21,083)</span></div><div class="segment" style="height:12.1%; background:var(--color-high);"><span>12.1%<br>(4,278)</span></div><div class="year-label">2022</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:29.6%; background:var(--color-low);"><span>29.6%<br>(11,206)</span></div><div class="segment" style="height:56.4%; background:var(--color-mid);"><span>56.4%<br>(21,328)</span></div><div class="segment" style="height:14.0%; background:var(--color-high);"><span>14.0%<br>(5,297)</span></div><div class="year-label">2023</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:50.6%; background:var(--color-low);"><span>50.6%<br>(23,881)</span></div><div class="segment" style="height:34.6%; background:var(--color-mid);"><span>34.6%<br>(16,307)</span></div><div class="segment" style="height:14.8%; background:var(--color-high);"><span>14.8%<br>(6,993)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:53.1%; background:var(--color-low);"><span>53.1%<br>(28,220)</span></div><div class="segment" style="height:21.9%; background:var(--color-mid);"><span>21.9%<br>(11,649)</span></div><div class="segment" style="height:25.0%; background:var(--color-high);"><span>25.0%<br>(13,295)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-label">전사 (F)</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar"><div class="segment" style="height:19.0%; background:var(--color-low);"><span>19.0%<br>(10,542)</span></div><div class="segment" style="height:64.7%; background:var(--color-mid);"><span>64.7%<br>(35,825)</span></div><div class="segment" style="height:16.3%; background:var(--color-high);"><span>16.3%<br>(9,006)</span></div><div class="year-label">2021</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:19.8%; background:var(--color-low);"><span>19.8%<br>(10,947)</span></div><div class="segment" style="height:63.0%; background:var(--color-mid);"><span>63.0%<br>(34,780)</span></div><div class="segment" style="height:17.1%; background:var(--color-high);"><span>17.1%<br>(9,452)</span></div><div class="year-label">2022</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:20.3%; background:var(--color-low);"><span>20.3%<br>(12,366)</span></div><div class="segment" style="height:58.0%; background:var(--color-mid);"><span>58.0%<br>(35,381)</span></div><div class="segment" style="height:21.8%; background:var(--color-high);"><span>21.8%<br>(13,297)</span></div><div class="year-label">2023</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:35.9%; background:var(--color-low);"><span>35.9%<br>(27,888)</span></div><div class="segment" style="height:40.4%; background:var(--color-mid);"><span>40.4%<br>(31,320)</span></div><div class="segment" style="height:23.7%; background:var(--color-high);"><span>23.7%<br>(18,359)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:37.7%; background:var(--color-low);"><span>37.7%<br>(36,067)</span></div><div class="segment" style="height:26.8%; background:var(--color-mid);"><span>26.8%<br>(25,684)</span></div><div class="segment" style="height:35.5%; background:var(--color-high);"><span>35.5%<br>(33,975)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-label">CL사업실 (F)</div>
+                <div class="bar-wrapper">
+                    <div class="stack-bar"><div class="segment" style="height:4.5%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">4.5%<br>(743)</span></div><div class="segment" style="height:74.2%; background:var(--color-mid);"><span>74.2%<br>(12,124)</span></div><div class="segment" style="height:21.2%; background:var(--color-high);"><span>21.2%<br>(3,466)</span></div><div class="year-label">2021</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:4.0%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">4.0%<br>(575)</span></div><div class="segment" style="height:71.3%; background:var(--color-mid);"><span>71.3%<br>(10,286)</span></div><div class="segment" style="height:24.7%; background:var(--color-high);"><span>24.7%<br>(3,568)</span></div><div class="year-label">2022</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:4.4%; background:var(--color-low); justify-content:flex-start;"><span class="low-segment-label" style="font-size:10px; bottom:1px;">4.4%<br>(756)</span></div><div class="segment" style="height:62.8%; background:var(--color-mid);"><span>62.8%<br>(10,829)</span></div><div class="segment" style="height:32.8%; background:var(--color-high);"><span>32.8%<br>(5,668)</span></div><div class="year-label">2023</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:13.0%; background:var(--color-low);"><span>13.0%<br>(3,037)</span></div><div class="segment" style="height:52.0%; background:var(--color-mid);"><span>52.0%<br>(12,171)</span></div><div class="segment" style="height:35.1%; background:var(--color-high);"><span>35.1%<br>(8,207)</span></div><div class="year-label">2024</div></div>
+                    <div class="stack-bar"><div class="segment" style="height:18.2%; background:var(--color-low);"><span>18.2%<br>(5,772)</span></div><div class="segment" style="height:35.0%; background:var(--color-mid);"><span>35.0%<br>(11,095)</span></div><div class="segment" style="height:46.8%; background:var(--color-high);"><span>46.8%<br>(14,847)</span></div><div class="year-label">2025</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 섹션 5: CAGR 분석 -->
+    <div class="report-section">
+        <h3 class="section-title"><i class="fa-solid fa-magnifying-glass-chart"></i> 참고) 2021년 대비 2025년 연평균 성장률 비교</h3>
+        
+        <div style="margin-bottom: 40px;">
+            <h4 style="font-size: 22px; margin-bottom: 20px; color: var(--color-dark-high); font-weight: 900;">1. 전체(매트리스+프레임) 판매 CAGR</h4>
+            <table class="cagr-table">
+                <thead><tr><th>구분</th><th>홈케어</th><th>전사</th><th>CL</th></tr></thead>
+                <tbody>
+                    <tr class="highlight-row"><td>저가</td><td style="color:#b45309">+47.7%</td><td style="color:#b45309">+49.2%</td><td style="color:#b45309">+64.3%</td></tr>
+                    <tr style="color:#94a3b8"><td>중가</td><td>-1.3%</td><td>+0.1%</td><td>+3.6%</td></tr>
+                    <tr class="highlight-row"><td>고가</td><td style="color:#15803d">+44.3%</td><td style="color:#15803d">+47.2%</td><td style="color:#15803d">+51.3%</td></tr>
+                    <tr style="background-color: #f1f5f9; font-weight: 900;"><td>합계</td><td>+13.3%</td><td>+12.2%</td><td>+13.4%</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="cagr-side-grid">
+            <div>
+                <h4 style="font-size: 20px; margin-bottom: 10px; color: #5ea1d7; font-weight: 900;">2. 매트리스 단독 CAGR</h4>
+                <table class="cagr-table" style="font-size: 15px; margin-bottom: 5px;">
+                    <thead><tr style="background:#5ea1d7"><th>구분</th><th>홈케어</th><th>전사</th><th>CL</th></tr></thead>
+                    <tbody>
+                        <tr class="highlight-row"><td>저가</td><td>+99.2%</td><td>+80.8%</td><td>+61.9%</td></tr>
+                        <tr><td>중가</td><td>+2.3%</td><td>+2.8%</td><td>+5.6%</td></tr>
+                        <tr class="highlight-row"><td>고가<sup>*</sup></td><td>+6.7%</td><td>+18.0%</td><td>+9.8%</td></tr>
+                        <tr style="background-color: #f1f5f9; font-weight: 900;"><td>합계</td><td>+12.8%</td><td>+10.6%</td><td>+10.8%</td></tr>
+                    </tbody>
+                </table>
+                <p style="font-size: 11px; color: #64748b; font-weight: 500; margin: 0; padding-left: 5px;">* 매트리스 고가 제품은 2021~2022년 데이터 부재로 2023~2025년 기준 CAGR임</p>
+            </div>
+            <div>
+                <h4 style="font-size: 20px; margin-bottom: 10px; color: var(--color-dark-high); font-weight: 900;">3. 프레임 단독 CAGR</h4>
+                <table class="cagr-table" style="font-size: 15px; margin-bottom: 5px;">
+                    <thead><tr style="background:var(--color-dark-high)"><th>구분</th><th>홈케어</th><th>전사</th><th>CL</th></tr></thead>
+                    <tbody>
+                        <tr class="highlight-row"><td>저가</td><td>+32.4%</td><td>+36.0%</td><td>+67.2%</td></tr>
+                        <tr><td>중가</td><td>-11.0%</td><td>-8.0%</td><td>-2.2%</td></tr>
+                        <tr class="highlight-row"><td>고가</td><td>+38.8%</td><td>+39.2%</td><td>+43.9%</td></tr>
+                        <tr style="background-color: #f1f5f9; font-weight: 900;"><td>합계</td><td>+14.1%</td><td>+14.7%</td><td>+18.0%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 섹션 6: 저가 상승 원인 분석 -->
+    <div class="report-section">
+        <h3 class="section-title">1. 저가 비중 상승 원인 분석</h3>
+        <div class="insight-card">
+            <h4>2024년 출시 보급형 라인업의 시장 점유 가속화</h4>
+            <p>2023년 하반기 출시된 <strong>엘리트 매트리스</strong>와 <strong>비렉스 파운데이션</strong>이 2024년 이후 홈케어 저가 시장의 성장을 실질적으로 주도하고 있습니다.</p>
+        </div>
+        <div class="chart-grid" style="grid-template-columns: 1fr 1fr; gap: 40px;">
+            <div class="chart-container">
+                <div class="chart-label" style="background: var(--color-mid); color: white;">엘리트 매트리스 판매 비중</div>
+                <div class="bar-wrapper" style="height: 380px;">
+                    <div class="stack-bar" style="height: 100%;">
+                        <div class="segment" style="height: 11.5%; background: var(--color-low);"><span class="txt-lg">2,730건<br>(4.6%)</span></div>
+                        <div class="segment" style="height: 88.5%; background: #f1f5f9;"></div>
+                        <div class="year-label">2023</div>
+                    </div>
+                    <div class="stack-bar" style="height: 100%;">
+                        <div class="segment" style="height: 71.0%; background: var(--color-low);"><span class="txt-lg">18,866건<br>(28.4%)</span></div>
+                        <div class="segment" style="height: 29.0%; background: #f1f5f9;"></div>
+                        <div class="year-label">2024</div>
+                    </div>
+                    <div class="stack-bar" style="height: 100%;">
+                        <div class="segment" style="height: 77.0%; background: var(--color-low);"><span class="txt-lg">21,725건<br>(30.8%)</span></div>
+                        <div class="segment" style="height: 23.0%; background: #f1f5f9;"></div>
+                        <div class="year-label">2025</div>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-label" style="background: var(--color-mid); color: white;">비렉스 파운데이션 판매 비중</div>
+                <div class="bar-wrapper" style="height: 380px;">
+                    <div class="stack-bar" style="height: 100%;">
+                        <div class="segment" style="height: 6.0%; background: var(--color-low);"><span style="font-size: 11px !important; color: #000; font-weight: 900;">1,131건<br>(3.0%)</span></div>
+                        <div class="segment" style="height: 94.0%; background: #f1f5f9;"></div>
+                        <div class="year-label">2023</div>
+                    </div>
+                    <div class="stack-bar" style="height: 100%;">
+                        <div class="segment" style="height: 83.8%; background: var(--color-low);"><span class="txt-lg">19,756건<br>(41.9%)</span></div>
+                        <div class="segment" style="height: 16.2%; background: #f1f5f9;"></div>
+                        <div class="year-label">2024</div>
+                    </div>
+                    <div class="stack-bar" style="height: 100%;">
+                        <div class="segment" style="height: 98.0%; background: var(--color-low);"><span class="txt-lg">26,071건<br>(49.0%)</span></div>
+                        <div class="segment" style="height: 2.0%; background: #f1f5f9;"></div>
+                        <div class="year-label">2025</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 섹션 7: 고가 프레임 성장 분석 -->
+    <div class="report-section">
+        <h3 class="section-title">2. 고가 프레임 성장 분석</h3>
+        <div class="insight-card">
+            <h4>프리미엄 신모델 3종 출시 효과</h4>
+            <p>2024년 <strong>볼륨, 소프트쿠션, 비렉스 수납형</strong> 프레임의 순차 출시로 홈케어사업실 고가 프레임 비중이 25%까지 상승하며 수익구조 개선을 주도했습니다.</p>
+        </div>
+        <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <div class="chart-container" style="width: 850px;">
+                <div class="chart-label" style="background: var(--color-dark-high); color: white;">프레임 판매량 중 고가 프레임 비중</div>
+                <div class="bar-wrapper" style="gap: 120px; justify-content: center; height: 380px; overflow: visible;">
+                    <div class="stack-bar" style="height: 100%; width: 100px;">
+                        <div class="segment" style="height: 38.0%; background: #94a3b8;"><span class="txt-lg">3,582건<br>(11.4%)</span></div>
+                        <div class="segment" style="height: 62.0%; background: #f1f5f9;"></div>
+                        <div class="year-label">2021</div>
+                    </div>
+                    <div class="stack-bar" style="height: 100%; width: 100px;">
+                        <div class="segment" style="height: 49.3%; background: #94a3b8;"><span class="txt-lg">5,297건<br>(14.8%)</span></div>
+                        <div class="segment" style="height: 50.7%; background: #f1f5f9;"></div>
+                        <div class="year-label">2023</div>
+                    </div>
+                    <div class="stack-bar" style="height: 100%; width: 180px; overflow: visible;">
+                        <div class="segment" style="height: 22.0%; background: #64748b;"><span class="txt-lg">그외 3,500건 (6.6%)</span></div>
+                        <div class="segment" style="height: 28.3%; background: #3b82f6;"><span class="txt-lg">볼륨 4,542건 (8.5%)</span></div>
+                        <div class="segment" style="height: 26.0%; background: #60a5fa;"><span class="txt-lg">수납 4,121건 (7.8%)</span></div>
+                        <div class="segment" style="height: 7.0%; background: #93c5fd;"><span class="txt-lg">소프트 1,132건 (2.1%)</span></div>
+                        <div class="segment" style="height: 16.7%; background: #f1f5f9;"></div>
+                        <div class="year-label" style="color: var(--color-dark-high); font-weight: 900; font-size: 20px;">2025</div>
+                        <div style="position: absolute; right: -90px; bottom: 41.6%; transform: translateY(50%); font-weight: 900; color: #fff; font-size: 32px; background: var(--color-dark-high); padding: 10px 15px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 101;">25%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 섹션 8: 모델 분포 현황 (60종 전수 매핑) -->
+    <div class="report-section">
+        <h3 class="section-title"><i class="fa-solid fa-chart-area" style="color:#5ea1d7"></i> 가격대별 모델 분포 현황 (총 60종 전수)</h3>
+        <div class="insight-card" style="border-left-color: #ef4444;">
+            <h4>제품 부문별 가격 전이 허들 분석</h4>
+            <p>매트리스 부문의 중가-고가 간 <strong>가격 격차(32,133원)</strong>는 프레임 부문(15,417원) 대비 약 2배 높습니다. 이는 고가 매트리스 시장 진입의 결정적 저항선으로 분석됩니다.</p>
+        </div>
+        <div class="scatter-outer">
+            <div class="scatter-box">
+                <div class="y-axis"><span>0</span><span>1만원</span><span>2만원</span><span>3만원</span><span>4만원</span><span>5만원</span><span>6만원</span><span>7만원</span><span>8만원</span><span>9만원</span><span>10만원</span></div>
+                <div class="zone bg-low" style="bottom: 0%; height: 15%;"></div>
+                <div class="zone bg-mid" style="bottom: 15%; height: 10%;"></div>
+                <div class="zone bg-high" style="bottom: 25%; height: 75%; opacity: 0.05;"></div>
+                <div class="zone zone-mattress bg-low" style="bottom: 0%; height: 29%;"></div>
+                <div class="zone zone-mattress bg-mid" style="bottom: 29%; height: 21%;"></div>
+                <div class="zone zone-mattress bg-high" style="bottom: 50%; height: 50%; opacity: 0.1;"></div>
+                <div class="x-axis-labels"><span>FRAME / FOUNDATION</span><span>MATTRESS</span></div>
+                
+                <div class="avg-marker" style="bottom: 14.9%; left:0;"><div class="avg-label" style="background:#b45309; left:-145px;">F 저가평균: 14,900원</div></div>
+                <div class="avg-marker" style="bottom: 21.2%; left:0;"><div class="avg-label" style="background:#1e40af; left:-145px;">F 중가평균: 21,233원</div></div>
+                <div class="avg-marker" style="bottom: 36.6%; left:0;"><div class="avg-label" style="background:#b91c1c; left:-145px;">F 고가평균: 36,650원</div></div>
+                <div class="avg-marker" style="bottom: 25.9%; left:52%;"><div class="avg-label" style="background:#b45309; right:-145px;">M 저가평균: 25,900원</div></div>
+                <div class="avg-marker" style="bottom: 38.5%; left:52%;"><div class="avg-label" style="background:#1e40af; right:-145px;">M 중가평균: 38,567원</div></div>
+                <div class="avg-marker" style="bottom: 70.7%; left:52%;"><div class="avg-label" style="background:#b91c1c; right:-145px;">M 고가평균: 70,700원</div></div>
+
+                <!-- [FRAME 31종 전수] -->
+                <div class="scatter-point" style="bottom:14.9%; left:5%; background:var(--color-low);"></div><div class="point-label off-u" style="bottom:14.9%; left:5%;">F02(14,900)</div>
+                <div class="scatter-point" style="bottom:14.9%; left:12%; background:var(--color-low);"></div><div class="point-label off-d" style="bottom:14.9%; left:12%;">F03(14,900)</div>
+                <div class="scatter-point" style="bottom:14.9%; left:19%; background:var(--color-low);"></div><div class="point-label off-u" style="bottom:14.9%; left:19%;">비렉스 파운데이션(14,900)</div>
+                <div class="scatter-point" style="bottom:17.9%; left:25%; background:var(--color-mid);"></div><div class="point-label off-d" style="bottom:17.9%; left:25%;">싱글 프레임(17,900)</div>
+                <div class="scatter-point" style="bottom:17.9%; left:31%; background:var(--color-mid);"></div><div class="point-label off-u" style="bottom:17.9%; left:31%;">모던 수납(17,900)</div>
+                <div class="scatter-point" style="bottom:18.9%; left:10%; background:var(--color-mid);"></div><div class="point-label off-r" style="bottom:18.9%; left:10%;">저상형 싱글(18,900)</div>
+                <div class="scatter-point" style="bottom:18.9%; left:38%; background:var(--color-mid);"></div><div class="point-label off-d" style="bottom:18.9%; left:38%;">투매트리스 A(18,900)</div>
+                <div class="scatter-point" style="bottom:19.9%; left:15%; background:var(--color-mid);"></div><div class="point-label off-u" style="bottom:19.9%; left:15%;">투매트리스 B(19,900)</div>
+                <div class="scatter-point" style="bottom:20.9%; left:28%; background:var(--color-mid);"></div><div class="point-label off-d" style="bottom:20.9%; left:28%;">원목 프레임(20,900)</div>
+                <div class="scatter-point" style="bottom:20.9%; left:34%; background:var(--color-mid);"></div><div class="point-label off-u" style="bottom:20.9%; left:34%;">우디 프레임(20,900)</div>
+                <div class="scatter-point" style="bottom:21.9%; left:8%; background:var(--color-mid);"></div><div class="point-label off-r" style="bottom:21.9%; left:8%;">원목 쿠션(21,900)</div>
+                <div class="scatter-point" style="bottom:21.9%; left:42%; background:var(--color-mid);"></div><div class="point-label off-d" style="bottom:21.9%; left:42%;">코지 프레임(21,900)</div>
+                <div class="scatter-point" style="bottom:22.9%; left:18%; background:var(--color-mid);"></div><div class="point-label off-u" style="bottom:22.9%; left:18%;">마이 프레임(22,900)</div>
+                <div class="scatter-point" style="bottom:22.9%; left:24%; background:var(--color-mid);"></div><div class="point-label off-d" style="bottom:22.9%; left:24%;">루나 프레임(22,900)</div>
+                <div class="scatter-point" style="bottom:22.9%; left:30%; background:var(--color-mid);"></div><div class="point-label off-u" style="bottom:22.9%; left:30%;">투매트리스 C(22,900)</div>
+                <div class="scatter-point" style="bottom:24.9%; left:36%; background:var(--color-mid);"></div><div class="point-label off-r" style="bottom:24.9%; left:36%;">모던 쿠션(24,900)</div>
+                <div class="scatter-point" style="bottom:25.9%; left:6%; background:var(--color-dark-high);"></div><div class="point-label off-u" style="bottom:25.9%; left:6%;">볼륨 프레임(25,900)</div>
+                <div class="scatter-point" style="bottom:25.9%; left:14%; background:var(--color-dark-high);"></div><div class="point-label off-d" style="bottom:25.9%; left:14%;">비렉스 수납형(25,900)</div>
+                <div class="scatter-point" style="bottom:25.9%; left:22%; background:var(--color-dark-high);"></div><div class="point-label off-u" style="bottom:25.9%; left:22%;">단매트리스 프레임(25,900)</div>
+                <div class="scatter-point" style="bottom:25.9%; left:32%; background:var(--color-dark-high);"></div><div class="point-label off-d" style="bottom:25.9%; left:32%;">저상형 패밀리 A(25,900)</div>
+                <div class="scatter-point" style="bottom:25.9%; left:39%; background:var(--color-dark-high);"></div><div class="point-label off-u" style="bottom:25.9%; left:39%;">저상형 패밀리 B(25,900)</div>
+                <div class="scatter-point" style="bottom:26.9%; left:11%; background:var(--color-dark-high);"></div><div class="point-label off-r" style="bottom:26.9%; left:11%;">마이프레임 사이드 A(26,900)</div>
+                <div class="scatter-point" style="bottom:26.9%; left:45%; background:var(--color-dark-high);"></div><div class="point-label off-l" style="bottom:26.9%; left:45%;">마이프레임 사이드 B(26,900)</div>
+                <div class="scatter-point" style="bottom:29.9%; left:18%; background:var(--color-dark-high);"></div><div class="point-label off-u" style="bottom:29.9%; left:18%;">소프트쿠션(29,900)</div>
+                <div class="scatter-point" style="bottom:30.9%; left:28%; background:var(--color-dark-high);"></div><div class="point-label off-d" style="bottom:30.9%; left:28%;">컴포트 프레임(30,900)</div>
+                <div class="scatter-point" style="bottom:32.9%; left:38%; background:var(--color-dark-high);"></div><div class="point-label off-u" style="bottom:32.9%; left:38%;">그레이스 프레임(32,900)</div>
+                <div class="scatter-point" style="bottom:32.9%; left:44%; background:var(--color-dark-high);"></div><div class="point-label off-d" style="bottom:32.9%; left:44%;">모던 라운드(32,900)</div>
+                <div class="scatter-point" style="bottom:57.9%; left:45%; background:var(--color-dark-high);"></div><div class="point-label off-r" style="bottom:57.9%; left:45%; font-weight:900;">모션 프레임(57,900)</div>
+
+                <!-- [MATTRESS 29종 전수] -->
+                <div class="scatter-point" style="bottom:21.9%; left:55%; background:var(--color-high);"></div><div class="point-label off-r" style="bottom:21.9%; left:55%;">슬림탑퍼 프라임(21,900)</div>
+                <div class="scatter-point" style="bottom:26.9%; left:62%; background:var(--color-high);"></div><div class="point-label off-r" style="bottom:26.9%; left:62%;">엘리트(26,900)</div>
+                <div class="scatter-point" style="bottom:28.9%; left:68%; background:var(--color-high);"></div><div class="point-label off-u" style="bottom:28.9%; left:68%;">일반형 매트리스(28,900)</div>
+                <div class="scatter-point" style="bottom:29.9%; left:56%; background:var(--color-high);"></div><div class="point-label off-l" style="bottom:29.9%; left:56%;">탑퍼교체 프라임(29,900)</div>
+                <div class="scatter-point" style="bottom:30.9%; left:75%; background:var(--color-high);"></div><div class="point-label off-u" style="bottom:30.9%; left:75%;">모디(30,900)</div>
+                <div class="scatter-point" style="bottom:30.9%; left:82%; background:var(--color-high);"></div><div class="point-label off-d" style="bottom:30.9%; left:82%;">프라임 플러스 일반(30,900)</div>
+                <div class="scatter-point" style="bottom:30.9%; left:88%; background:var(--color-high);"></div><div class="point-label off-u" style="bottom:30.9%; left:88%;">탑퍼 프라임 플러스 2(30,900)</div>
+                <div class="scatter-point" style="bottom:31.9%; left:64%; background:var(--color-high);"></div><div class="point-label off-l" style="bottom:31.9%; left:64%;">더블 사이드(31,900)</div>
+                <div class="scatter-point" style="bottom:32.9%; left:72%; background:var(--color-high);"></div><div class="point-label off-u" style="bottom:32.9%; left:72%;">루네어(32,900)</div>
+                <div class="scatter-point" style="bottom:32.9%; left:78%; background:var(--color-high);"></div><div class="point-label off-d" style="bottom:32.9%; left:78%;">메모리폼 컴팩트(32,900)</div>
+                <div class="scatter-point" style="bottom:32.9%; left:84%; background:var(--color-high);"></div><div class="point-label off-u" style="bottom:32.9%; left:84%;">원바디 2(32,900)</div>
+                <div class="scatter-point" style="bottom:32.9%; left:90%; background:var(--color-high);"></div><div class="point-label off-d" style="bottom:32.9%; left:90%;">고급형 매트리스(32,900)</div>
+                <div class="scatter-point" style="bottom:32.9%; left:95%; background:var(--color-high);"></div><div class="point-label off-r" style="bottom:32.9%; left:95%;">탑퍼 프라임 커버(32,900)</div>
+                <div class="scatter-point" style="bottom:33.9%; left:58%; background:var(--color-high);"></div><div class="point-label off-l" style="bottom:33.9%; left:58%;">탑퍼 더블체인지(33,900)</div>
+                <div class="scatter-point" style="bottom:35.9%; left:66%; background:var(--color-high);"></div><div class="point-label off-u" style="bottom:35.9%; left:66%;">원바디(35,900)</div>
+                <div class="scatter-point" style="bottom:36.9%; left:74%; background:var(--color-high);"></div><div class="point-label off-d" style="bottom:36.9%; left:74%;">탑퍼 트리플체인지(36,900)</div>
+                <div class="scatter-point" style="bottom:38.9%; left:80%; background:var(--color-high);"></div><div class="point-label off-u" style="bottom:38.9%; left:80%;">하이브리드 3(38,900)</div>
+                <div class="scatter-point" style="bottom:38.9%; left:88%; background:var(--color-high);"></div><div class="point-label off-d" style="bottom:38.9%; left:88%;">하이브리드 4(38,900)</div>
+                <div class="scatter-point" style="bottom:39.9%; left:94%; background:var(--color-high);"></div><div class="point-label off-r" style="bottom:39.9%; left:94%;">하이브리드 매트리스(39,900)</div>
+                <div class="scatter-point" style="bottom:40.9%; left:54%; background:var(--color-high);"></div><div class="point-label off-r" style="bottom:40.9%; left:54%;">메모리폼 매트리스(40,900)</div>
+                <div class="scatter-point" style="bottom:45.9%; left:95%; background:var(--color-high);"></div><div class="point-label off-r" style="bottom:45.9%; left:95%;">하이브리드 2(45,900)</div>
+                <div class="scatter-point" style="bottom:53.9%; left:60%; background:var(--color-dark-high);"></div><div class="point-label off-r" style="bottom:53.9%; left:60%;">시그니처(53,900)</div>
+                <div class="scatter-point" style="bottom:57.9%; left:70%; background:var(--color-dark-high);"></div><div class="point-label off-u" style="bottom:57.9%; left:70%;">시그니처 파이어쉴드(57,900)</div>
+                <div class="scatter-point" style="bottom:63.9%; left:58%; background:var(--color-dark-high);"></div><div class="point-label off-l" style="bottom:63.9%; left:58%;">시그니처 컴포트(63,900)</div>
+                <div class="scatter-point" style="bottom:64.9%; left:80%; background:var(--color-dark-high);"></div><div class="point-label off-r" style="bottom:64.9%; left:80%; font-weight:900;">스마트 S5(64,900)</div>
+                <div class="scatter-point" style="bottom:67.9%; left:72%; background:var(--color-dark-high);"></div><div class="point-label off-d" style="bottom:67.9%; left:72%;">시그니처 FS 컴포트(67,900)</div>
+                <div class="scatter-point" style="bottom:76.9%; left:85%; background:var(--color-dark-high);"></div><div class="point-label off-u" style="bottom:76.9%; left:85%;">스마트 S6+(76,900)</div>
+                <div class="scatter-point" style="bottom:77.9%; left:88%; background:var(--color-dark-high);"></div><div class="point-label off-r" style="bottom:77.9%; left:88%; font-weight:900;">스마트 S7(77,900)</div>
+                <div class="scatter-point" style="bottom:98.9%; left:92%; background:var(--color-dark-high);"></div><div class="point-label off-r" style="bottom:98.9%; left:92%; font-weight:900;">스마트 S8+(98,900)</div>
+                
+                <div class="gap-bracket" style="bottom: 14.9%; height: 6.3%; left: -20px;"><div class="gap-val" style="left:-105px;">Gap: 6,333원</div></div>
+                <div class="gap-bracket" style="bottom: 21.2%; height: 15.4%; left: -20px;"><div class="gap-val" style="left:-105px;">Gap: 15,417원</div></div>
+                <div class="gap-bracket" style="bottom: 25.9%; height: 12.6%; right: -20px; border-left:0; border-right:2px solid #ef4444;"><div class="gap-val" style="right:-105px; left:auto;">Gap: 12,667원</div></div>
+                <div class="gap-bracket" style="bottom: 38.5%; height: 32.1%; right: -20px; border-left:0; border-right:2px solid #ef4444;"><div class="gap-val" style="right:-115px; left:auto;">Gap: 32,133원</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [신규 섹션] 고가 제품 판매 촉진 현황 -->
+    <div class="report-section">
+        <h3 class="section-title"><i class="fa-solid fa-coins" style="color:#5ea1d7"></i> 고가 제품 판매 촉진 현황</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%;">구분</th>
+                    <th>세부 내용</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 900;">수수료</td>
+                    <td style="text-align: left;">
+                        렌탈 영업 장려수수료에 <strong>전략제품 1.5건~2건 환산 가중</strong><br>
+                        <small style="color: #64748b;">(전략제품: 매트리스(스마트, 시그니처), 프레임(컴포트, 볼륨, 소프트쿠션, 그레이스, 모던라운드), 힐링상품군)</small>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 900;">경영평가</td>
+                    <td style="text-align: left;">
+                        <!-- [수정사항 반영] 내용 업데이트 -->
+                        • 렌탈환산건수(최대 16점)와 렌탈체력달성율(최대 32점) 부문에 <strong>1.5건 환산 가중 : 현재 - 스마트 매트리스</strong><br>
+                        • 전략제품(최대 10점) 부문에 <strong>1.5건 환산 가중 : 현재 - 힐링상품군</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 900;">내부 프로모션</td>
+                    <td style="text-align: left;">
+                        닥터 및 조직장 프로모션에 <strong>고가 신제품 1.5건 환산 가중</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 900;">추후 계획</td>
+                    <td style="text-align: left;">
+                        <!-- [수정사항 반영] 연도 26년으로 업데이트 -->
+                        경영 평가 항목 중 전략제품(최대 10점) 부문에 소파, 에어컨 및 고가 비렉스군 반영 예정.<br>
+                        <small style="color: #64748b;">(<span class="fact-highlight">26년</span>을 맞아 개편한 부문이며 고ARPU를 적용하는 제품군을 확장하여 운영하기 위한 전략)</small>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 섹션 9: 장기적인 검토사항(제언) -->
+    <div class="report-section" style="background: white; border-top: 6px solid var(--color-dark-high);">
+        <h3 class="section-title"><i class="fa-solid fa-compass" style="color:#5ea1d7"></i> 장기적인 검토사항(제언)</h3>
+        <div class="strategy-grid">
+            <div class="strategy-item">
+                <h5><span style="background:#5ea1d7; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">1</span> 브릿지 라인업 보완</h5>
+                <p>매트리스의 압도적인 가격 갭(32,133원)을 완화하기 위해 <span class="fact-highlight"><strong>(4~5만원대) 프리미엄 중가 모델을 강화</strong></span>하여 자연스러운 상향 판매(Up-selling) 유도.</p>
+            </div>
+            
+            <div class="strategy-item">
+                <h5><span style="background:var(--color-high); color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">2</span> 고가 라인업의 가치 증명</h5>
+                <p>고가 라인업의 가치를 증명하기 위하여 <span class="fact-highlight"><strong>고객 사은품</strong></span>(매트리스 악세서리, 할인바우처 등), <span class="fact-highlight"><strong>판매인 동기부여</strong></span>(수수료 등) 강화 및 <span class="fact-highlight"><strong>제품의 우수함</strong></span>을 더욱 정확하게 어필 필요.</p>
+            </div>
+            
+            <div class="strategy-item">
+                <h5><span style="background:var(--color-low); color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">3</span> 생애주기별 CRM 업셀링 체계 구축</h5>
+                <p>저가 유입 고객의 렌탈 만기 시점에 맞춰, 사용자 수면 데이터 기반의 맞춤형 <span class="fact-highlight"><strong>고가 모델 교체 혜택을 제공</strong></span>하는 정교한 타겟 마케팅 실행.</p>
+            </div>
+            
+            <div class="strategy-item">
+                <h5><span style="background:#ff7043; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">4</span> 갤러리 활용 체험 마케팅</h5>
+                <p>중고가 라인업에 <span class="fact-highlight"><strong>갤러리 체험을 연계</strong></span>하여 고객이 직접 프리미엄 가치를 경험하게 함으로써 브랜드 충성도 확보.</p>
+            </div>
+        </div>
+        <div style="margin-top: 100px; text-align: center; color: #cbd5e1; font-size: 14px; font-weight: 900; letter-spacing: 5px; text-transform: uppercase;">
+            Bed Sales Strategy Intelligence Division &copy; 2026.03 Report
+        </div>
+    </div>
+
+    <!-- ✨ AI 인사이트 연구소 섹션 -->
+    <div class="report-section ai-lab-container">
+        <h3 class="section-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:#0ea5e9"></i> ✨ AI 인사이트 연구소</h3>
+        <p style="font-size: 18px; color: #475569; margin-bottom: 30px; font-weight: 500;">
+            보고서 데이터를 바탕으로 Gemini AI가 비즈니스 질문에 답변합니다. 시장 상황에 맞는 맞춤형 전략을 제안받아보세요.
+        </p>
+        
+        <div class="ai-input-wrapper">
+            <textarea id="ai-query" class="ai-textarea" rows="3" placeholder="예: 2026년 고가 매트리스 시장 점유율을 높이기 위한 프로모션 아이디어는?"></textarea>
+            <button id="ai-ask-btn" class="ai-btn">
+                ✨ 전략 생성
+            </button>
+        </div>
+
+        <div id="ai-response" class="ai-result-card" style="display: none;">
+            <!-- AI 답변이 여기에 표시됩니다. -->
+        </div>
+    </div>
+
+    <script type="module">
+        const apiKey = "";
+        const aiQueryInput = document.getElementById('ai-query');
+        const aiAskBtn = document.getElementById('ai-ask-btn');
+        const aiResponseBox = document.getElementById('ai-response');
+
+        async function fetchAIAnalysis(userQuery) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const context = `
+                비즈니스 상황: 침대 렌탈 시장 5개년 데이터 분석 중.
+                주요 상황:
+                - 매트리스 저가 비중 성장 (엘리트 모델 효과)
+                - 고가 프레임 및 저가 파운데이션 출시로 인한 비중 확대
+                - 중가 구간 정체 및 고가-중가 간 가격 갭 존재.
+                사용자 질문: ${userQuery}
+            `;
+
+            const payload = {
+                contents: [{ parts: [{ text: context }] }],
+                systemInstruction: { 
+                    parts: [{ text: "당신은 침대 시장 분석 전문가입니다. 보고서 데이터를 근거로 구체적이고 실행 가능한 비즈니스 전략을 한국어로 제안하세요. 답변은 불렛포인트 형식으로 명확하게 구성하고, 긍정적이고 전문적인 톤을 유지하세요." }] 
+                }
+            };
+
+            let delay = 1000;
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error('API request failed');
+                    
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "답변을 생성할 수 없습니다.";
+                } catch (error) {
+                    if (i === 4) return "AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        aiAskBtn.addEventListener('click', async () => {
+            const query = aiQueryInput.value.trim();
+            if (!query) return;
+
+            aiAskBtn.disabled = true;
+            aiAskBtn.innerHTML = `<span class="loading-dots">분석 중</span>`;
+            aiResponseBox.style.display = 'block';
+            aiResponseBox.innerText = "데이터를 분석하고 최적의 전략을 구성하고 있습니다...";
+
+            const answer = await fetchAIAnalysis(query);
+            
+            aiResponseBox.innerText = answer;
+            aiAskBtn.disabled = false;
+            aiAskBtn.innerHTML = "✨ 전략 생성";
+        });
+    </script>
+
+</body>
+</html>
